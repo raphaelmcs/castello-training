@@ -10,6 +10,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Actions\DeleteAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -54,6 +56,12 @@ class StudentResource extends Resource
                     ->required()
                     ->preload() // Carrega os planos automaticamente na lista
                     ->searchable(),
+                Forms\Components\Select::make('schedule_id')
+                    ->relationship('schedule', 'name')
+                    ->label('Turma / Horário')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name} ({$record->time_slot})")
+                    ->preload()
+                    ->searchable(),
             ]);
     }
 
@@ -67,6 +75,9 @@ class StudentResource extends Resource
                 Tables\Columns\TextColumn::make('plan.name')
                     ->label('Plano')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('schedule.name')
+                    ->label('Turma')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('telefone')
                     ->label('Telefone'),
                 Tables\Columns\TextColumn::make('data_matricula')
@@ -75,10 +86,15 @@ class StudentResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                //
+                SelectFilter::make('plan_id')
+                    ->relationship('plan', 'name')
+                    ->label('Plano')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
